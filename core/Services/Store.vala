@@ -727,6 +727,37 @@ public class Services.Store : GLib.Object {
         }
     }
 
+    public void remove_item_from_store (Objects.Item item) {
+        // Collect item and all descendants first
+        var to_remove = new Gee.ArrayList<Objects.Item> ();
+        collect_items_to_remove (item, to_remove);
+
+        // Remove all from _items and clear cache
+        foreach (var i in to_remove) {
+            _items.remove (i);
+            _items_by_project_cache.unset (i.project_id);
+        }
+
+        // Now fire signals
+        foreach (var i in to_remove) {
+            i.deleted ();
+            item_deleted (i);
+            if (i.project != null) {
+                i.project.item_deleted (i);
+            }
+            if (i.has_section && i.section != null) {
+                i.section.item_deleted (i);
+            }
+        }
+    }
+
+    private void collect_items_to_remove (Objects.Item item, Gee.ArrayList<Objects.Item> list) {
+        list.add (item);
+        foreach (Objects.Item subitem in get_subitems (item)) {
+            collect_items_to_remove (subitem, list);
+        }
+    }
+
     public void move_item (Objects.Item item, string old_project_id = "", string old_section_id = "", string old_parent_id = "") {
         if (Services.Database.get_default ().move_item (item)) {
             _items_by_project_cache.unset (old_project_id);
