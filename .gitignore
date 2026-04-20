@@ -10,3 +10,6 @@ subprojects/gxml**/
 planify*txt
 .flatpak
 .buildconfig
+repo/
+build-dir/
+*.flatpak
