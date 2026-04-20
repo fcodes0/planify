@@ -202,6 +202,13 @@ public class MainWindow : Adw.ApplicationWindow {
                 }
             });
 
+            Services.DBusServer.get_default ().item_deleted.connect ((id) => {
+                Objects.Item? item = Services.Store.instance ().get_item (id);
+                if (item != null) {
+                    Services.Store.instance ().remove_item_from_store (item);
+                }
+            });
+
             var did_startup_sync = false; // Remove hack when upstream issue is resolved
 
             Timeout.add (Constants.STARTUP_SYNC_TIMEOUT, () => {
