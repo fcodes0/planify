@@ -255,6 +255,31 @@ namespace PlanifyCLI {
         return 0;
     }
 
+    private static int delete_task (string? task_id) {
+        if (task_id == null || task_id.strip () == "") {
+            stderr.printf ("Error: --task-id is required\n");
+            return 1;
+        }
+
+        Services.Database.get_default ().init_database ();
+
+        Objects.Item? item = Services.Store.instance ().get_item (task_id.strip ());
+        if (item == null) {
+            stderr.printf ("Error: Task ID '%s' not found\n", task_id);
+            return 1;
+        }
+
+        string content = item.content;
+        Services.Store.instance ().delete_item (item);
+
+        try { DBusClient.get_default ().interface.delete_item (task_id.strip ()); }
+        catch (Error e) { debug ("DBus notification failed: %s", e.message); }
+
+        stdout.printf ("{\"deleted\": true, \"id\": \"%s\", \"content\": \"%s\"}\n",
+            task_id.strip (), content.replace ("\"", "\\\""));
+        return 0;
+    }
+
     private static int add_task (TaskArguments args) {
         // Validate content
         string? error_message;
@@ -406,6 +431,8 @@ namespace PlanifyCLI {
                 return list_tasks (parsed.list_args);
             case CommandType.UPDATE:
                 return update_task (parsed.update_args);
+            case CommandType.DELETE:
+                return delete_task (parsed.update_args.task_id);
             case CommandType.ADD:
                 return add_task (parsed.task_args);
             case CommandType.BACKUP:

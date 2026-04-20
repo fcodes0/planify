@@ -25,6 +25,7 @@ namespace PlanifyCLI {
         LIST,
         UPDATE,
         BACKUP
+        DELETE
     }
 
     public class TaskArguments : Object {
@@ -128,11 +129,16 @@ namespace PlanifyCLI {
                     case "backup":
                         parsed.command_type = CommandType.BACKUP;
                         parsed.backup_args = parse_backup_command (command_args);
+
+                    case "delete":
+                        parsed.command_type = CommandType.DELETE;
+                        parsed.update_args = parse_delete_command (command_args);
                         return parsed;
 
                     default:
                         stderr.printf ("Error: Unknown command '%s'\n", command);
-                        stderr.printf ("Available commands: add, list, update, list-projects, backup\n");
+                        stderr.printf ("Available commands: add, list, update,
+                        delete, list-projects, backup\n");
                         exit_code = 1;
                         return null;
                 }
@@ -322,15 +328,30 @@ namespace PlanifyCLI {
             options[1] = { null };
 
             var context = new OptionContext ("- Export a JSON backup of all tasks and projects");
+
+            var backup_args = new BackupArguments ();
+            backup_args.output = output;
+            return backup_args;
+        }
+
+        private static UpdateArguments parse_delete_command (string[] args) throws OptionError {
+            string? task_id = null;
+
+            var options = new OptionEntry[2];
+            options[0] = { "task-id", 't', 0, OptionArg.STRING, ref task_id,
+                          "Task ID to delete (required)", "ID" };
+            options[1] = { null };
+
+            var context = new OptionContext ("- Delete a task permanently");
             context.add_main_entries (options, null);
             context.set_help_enabled (true);
 
             unowned string[] tmp = args;
             context.parse (ref tmp);
 
-            var backup_args = new BackupArguments ();
-            backup_args.output = output;
-            return backup_args;
+            var delete_args = new UpdateArguments ();
+            delete_args.task_id = task_id;
+            return delete_args;
         }
 
         private static void print_general_help (string program_name) {
@@ -341,11 +362,14 @@ namespace PlanifyCLI {
             stdout.printf ("  update           Update an existing task\n");
             stdout.printf ("  list-projects    List all projects\n");
             stdout.printf ("  backup           Export a JSON backup\n\n");
+            stdout.printf ("  delete           Delete a task permanently\n");
+            stdout.printf ("  list-projects    List all projects\n\n");
             stdout.printf ("Run '%s <command> --help' for command-specific options\n\n", program_name);
             stdout.printf ("Examples:\n");
             stdout.printf ("  %s add --help\n", program_name);
             stdout.printf ("  %s list --help\n", program_name);
             stdout.printf ("  %s update --help\n", program_name);
+            stdout.printf ("  %s delete --task-id <ID>\n", program_name);
         }
     }
 }
