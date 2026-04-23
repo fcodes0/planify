@@ -24,7 +24,7 @@ namespace PlanifyCLI {
         LIST_PROJECTS,
         LIST,
         UPDATE,
-        BACKUP
+        BACKUP,
         DELETE
     }
 
@@ -129,6 +129,7 @@ namespace PlanifyCLI {
                     case "backup":
                         parsed.command_type = CommandType.BACKUP;
                         parsed.backup_args = parse_backup_command (command_args);
+                        return parsed;
 
                     case "delete":
                         parsed.command_type = CommandType.DELETE;
@@ -147,6 +148,8 @@ namespace PlanifyCLI {
                 exit_code = 1;
                 return null;
             }
+
+            return null;
         }
 
         private static ListArguments parse_list_command (string[] args) throws OptionError {

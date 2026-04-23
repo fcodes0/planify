@@ -202,6 +202,28 @@ public class MainWindow : Adw.ApplicationWindow {
                 }
             });
 
+            Services.DBusServer.get_default ().item_updated.connect ((id) => {
+                Objects.Item? item = Services.Store.instance ().get_item (id);
+                if (item != null) {
+                    Objects.Item updated = Services.Database.get_default ().get_item_by_id (id);
+                    item.content = updated.content;
+                    item.description = updated.description;
+                    item.due = updated.due;
+                    item.priority = updated.priority;
+                    item.pinned = updated.pinned;
+                    item.updated_at = updated.updated_at;
+
+                    var new_labels = new Gee.HashMap<string, Objects.Label> ();
+                    foreach (Objects.Label label in updated.labels) {
+                        new_labels[label.id] = label;
+                    }
+                    item.check_labels (new_labels);
+
+                    item.updated ();
+                    Services.Store.instance ().item_updated (item, "");
+                }
+            });
+
             Services.DBusServer.get_default ().item_deleted.connect ((id) => {
                 Objects.Item? item = Services.Store.instance ().get_item (id);
                 if (item != null) {
